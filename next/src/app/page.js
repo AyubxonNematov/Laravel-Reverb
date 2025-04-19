@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { EchoInstance } from '../lib/echo';
+
 
 export default function Home() {
 	const [messages, setMessages] = useState([
@@ -8,6 +10,11 @@ export default function Home() {
 		{ id: 2, text: 'Qandaysiz?', type: 'sent' },
 	]);
 	const [newMessage, setNewMessage] = useState('');
+
+
+	useEffect(() => {
+		const echo = EchoInstance();
+	}, []);
 
 	const handleSend = (e) => {
 		e.preventDefault();
