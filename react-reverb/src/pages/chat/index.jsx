@@ -1,6 +1,6 @@
 import { useAuth } from '../../contexts/AuthContext';
 import { useState, useEffect } from 'react';
-import axios from '../../config/axios';
+import axios from '../../hooks/axios';
 
 const Chat = () => {
     const { logout, user } = useAuth();
