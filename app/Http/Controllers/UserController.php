@@ -10,7 +10,8 @@ class UserController
     public function users(Request $request)
     {
         $search = $request->input('search');
-        $users = User::query();
+            
+        $users = User::where('id', '!=', auth()->user()->id);
         if ($search) {
             $users->where('name', 'like', '%' . $search . '%');
         }
