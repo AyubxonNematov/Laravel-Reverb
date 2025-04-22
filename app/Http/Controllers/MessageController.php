@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Message;
+use App\Events\MessageSend;
 use Illuminate\Http\Request;
 
 class MessageController
@@ -33,6 +34,8 @@ class MessageController
             'receiver_id' => $request->receiver_id,
             'message' => $request->message,
         ]);
+
+        broadcast(new MessageSend($message, $request->receiver_id));
 
         return response()->json($message);
     }
