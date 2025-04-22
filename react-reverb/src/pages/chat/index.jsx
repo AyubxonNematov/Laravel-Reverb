@@ -1,6 +1,6 @@
 import { useAuth } from '../../contexts/AuthContext';
 import { useState, useEffect } from 'react';
-import axios from '../../hooks/axios';
+import axios from '../../configs/axios';
 
 const Chat = () => {
     const { logout, user } = useAuth();
@@ -51,7 +51,18 @@ const Chat = () => {
 
     useEffect(() => {
         getUsers();
-    }, []);
+
+        const channel = window.echo.private(`chat.${user.id}`);
+
+        channel.listen('MessageSend', (e) => {
+            setMessages(prevMessages => [...prevMessages, e.message]);
+        });
+
+        // Cleanup function
+        return () => {
+            channel.stopListening('MessageSend');
+        };
+    }, [user.id]); // Only depend on user.id which is stable
 
     return (
         <div className="min-h-screen bg-gray-100">
