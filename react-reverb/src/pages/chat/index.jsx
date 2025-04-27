@@ -9,6 +9,7 @@ const Chat = () => {
     const [messages, setMessages] = useState([]);
     const [message, setMessage] = useState('');
     const [activeUser, setActiveUser] = useState(null);
+    const [onlineUsers, setOnlineUsers] = useState(new Set());
 
     const getUsers = async (search) => {
         try {
@@ -52,17 +53,35 @@ const Chat = () => {
     useEffect(() => {
         getUsers();
 
-        const channel = window.echo.private(`chat.${user.id}`);
+        // Join presence channel
+        const presenceChannel = window.echo.join('presence')
+            .here((users) => {
+                const onlineUserIds = new Set(users.map(u => u.id));
+                setOnlineUsers(onlineUserIds);
+            })
+            .joining((user) => {
+                setOnlineUsers(prev => new Set([...prev, user.id]));
+            })
+            .leaving((user) => {
+                setOnlineUsers(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(user.id);
+                    return newSet;
+                });
+            });
 
-        channel.listen('MessageSend', (e) => {
+        // Listen for private messages
+        const privateChannel = window.echo.private(`chat.${user.id}`);
+        privateChannel.listen('MessageSend', (e) => {
             setMessages(prevMessages => [...prevMessages, e.message]);
         });
 
         // Cleanup function
         return () => {
-            channel.stopListening('MessageSend');
+            presenceChannel.stopListening('presence');
+            privateChannel.stopListening('MessageSend');
         };
-    }, [user.id]); // Only depend on user.id which is stable
+    }, [user.id]);
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -111,8 +130,13 @@ const Chat = () => {
                                                 className={`p-4 border-b border-gray-200 hover:bg-gray-50 cursor-pointer flex items-center ${activeUser === user.id ? 'bg-gray-100' : ''}`}
                                                 onClick={() => getMessages(user.id)}
                                             >
-                                                <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3">
-                                                    {user.name.charAt(0)}
+                                                <div className="relative">
+                                                    <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3">
+                                                        {user.name.charAt(0)}
+                                                    </div>
+                                                    {onlineUsers.has(user.id) && (
+                                                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <h3 className="font-medium">{user.name}</h3>
